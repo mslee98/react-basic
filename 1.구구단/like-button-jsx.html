@@ -1,0 +1,60 @@
+<html>
+<head>
+</head>
+<body>
+<div id="root"></div>
+
+
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+<script type="text/babel">
+  'use strict';
+
+  const e = React.createElement;
+
+  class LikeButton extends React.Component {
+    constructor(props) {
+      super(props);
+      this.state = {liked: false};
+    }
+
+    render() {
+      if (this.state.liked) {
+        return 'You liked this.';
+      }
+
+      // return React.createElement('button', {onClick: () => this.setState({liked: true})}, 'Like');
+      // 위에 있던 구문을 JSX 형식으로 변환한다면 아래와 같은 형태로 나온다
+      // 이 때 주의해야할 점은 html코드는 원래도 소문자로 적지만 대문자로도 적으면 인식을 한다고는함 html 태그들은 모두 소문자로
+      // 컴포넌트명은 무조건 대문자 시작이어야함
+      // 밑에 onClick 보면 {}로 묶여있는데 js 코드들은 모두 {}로 묶여야 한다고 함 만약 Like문자열 뒤에다 1+1을 붙히면 Like1+1이 되는데 {1+1}로 변경하면 Like2가 됨
+      // 객체라고 한다면 obj = {a:1, b:2}가 아니라 obj = {{a:1, b:2}} 이런식으로 두 번 감싸야함
+
+      // 그렇기 떄문에 if문과 for문을 보통은 삼항연산이나 map으로 대체되어서 쓴다.
+      // 추가로 형제 관계로 구성되어 있으면 안됨 <></>넣거나 부모 자식 관계로 넣어야함
+
+      return (
+        <button onClick={ () => this.setState({liked: true})}>
+          Like
+        </button>
+      );
+
+      //addEventListener('click', )
+    }
+  }
+</script>
+<script type="text/babel">
+  // ReactDOM.render(React.createElement(LikeButton), document.querySelector('#root'));
+  // 아래도 JSX 형식으로 변환한다면 아래와 같이 진행됨
+  // ReactDOM.render(<LikeButton/>, document.querySelector('#root')); // React 17버전 코드며 React 17버전으로 인식하고 18버전 기능들은 인식을 하지 못한다.
+  ReactDOM.createRoot(document.querySelector("#root")).render(<LikeButton/>); // React 18버전 코드임
+
+
+  /**
+   * 실질적으로 LikeButton.render() 리턴 부분을 보면 js가 읽을 수 없는 JSX문법이라서 브라우저 실행할 수 가 없지만
+   * babel 라이브러리를 사용하면 <button></button>부분을 React.CreateElement()메서드로 변경하여 실행해주기 때문에 가능하
+  */
+</script>
+</body>
+</html>

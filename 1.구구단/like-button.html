@@ -1,0 +1,64 @@
+<html>
+<head>
+</head>
+<body>
+<div id="root"></div>
+
+
+<!--
+    지금 CDN을 보면 development/production을 나누는데 지금은 그럴필요 없이
+    build 도구 툴이 발전했기 때문에 필요없음 bite나 webpack같은것
+-->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+<!--<script src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>-->
+<!--<script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>-->
+<!-- 
+    React는 결코 특별한것은 아님.. 결국 웹 브라우저가 읽을 수 있는 언어는 HTML, CSS, Java Script 이기 때문에 결국은 JS로 HTML과 CSS로 DOM을 조작하는것임
+
+ -->
+<script>
+  'use strict';
+
+  /*
+    지금은 Node로 create-react-app 을 사용해서 진행하면 좋지만 원시적인 코드로부터 이해하려고 
+  */
+  const e = React.createElement;
+
+
+/*
+    class로 구현하는 방식과 함수로 구현하는 방식이 존재함 물론 지금은 함수형 방식을 선호
+    사실상 클래스는 거의 안쓰긴 하는데 쓴다면 ErrorBoundary에서 쓴다고는함    
+*/
+
+
+/**
+ * 우선적으로 컴포넌트란? 화면과 데이터를 묶어놓은것임 React가 필요로 하게 된 이유는 데이터가 변화하는것에 따라 화면이 변하게 하는것인데 
+ * 그 화면을 데이터와 묶어 불필요한 부분을 제외하려고 하기 때문임
+ * 
+*/
+  class LikeButton extends React.Component {
+    constructor(props) {
+      super(props);
+      this.state = {liked: false};
+    }
+
+    render() {
+      if (this.state.liked) {
+        return 'You liked this.';
+      }
+
+      return React.createElement('button', {onClick: () => this.setState({liked: true})}, 'Like');
+    }
+  }
+</script>
+<script>
+    /**
+     * 아래 구문을 실행하지 않으면 아무것도 생성되지 않는데 아래 render()함수를 통해 LikeButton 클래스이며 컴포넌트를 id가 root인곳에 넣어줘야한다.
+     * 지금 보면 React.createElement()를 사용해서 만들기 때문에 html,css,js를 사용했던 사람들이 혼등을 느껴 나온게 JSX문법 이거는 jsx로 다시 만들겠음
+    */
+  ReactDOM.render(React.createElement(LikeButton), document.querySelector('#root'));
+</script>
+</body>
+</html>
