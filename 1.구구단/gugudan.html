@@ -18,7 +18,8 @@
             first: Math.ceil(Math.random() * 9),
             second: Math.ceil(Math.random() * 9),
             value: '',
-            result: ''
+            result: '',
+            resultNum: '',
         }
     }
 
@@ -28,9 +29,11 @@
         if(parseInt(this.state.value) === this.state.first * this.state.second){
             this.setState({
                 result:'정답',
+                resultNum: this.state.first * this.state.second,
                 first: Math.ceil(Math.random() * 9),
                 second: Math.ceil(Math.random() * 9),
-                valeu: ''
+                value: '',
+
             });
         } else {
             this.setState({
@@ -53,7 +56,7 @@
                     <button>입력</button>
                 </form>
                 <div>
-                    {this.state.result}
+                    {this.state.resultNum} {this.state.result}
                 </div>
             </div>
         );
