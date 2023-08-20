@@ -1,4 +1,5 @@
 const path = require('path')
+const RefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
 
 module.exports = {
    //webpack이름
@@ -43,15 +44,35 @@ module.exports = {
                     }],
                     '@babel/preset-react',
                 ],
-                // plugins: ['@babel/plugin-syntax-jsx'],
+
+                plugins: ['react-refresh/babel'],
             },
         }],
     },
+
+    plugins: [
+     new RefreshWebpackPlugin()
+    ],
 
    // *출력*
    // node에 path.join을 사용하여 현재폴더 + dist 내로 입력한 파일들을 app.js로 출력한다.
    output: {
        path: path.join(__dirname, 'dist'),
        filename: 'app.js'
-   }
+   },
+
+//    devServer: {
+//        //프론트 개발 편의용으로 생성한 서버로 아래 publicPath에 결과를 메모리로 저장을 해두며 저장했던 결과물을 보여주는거임
+//        //hot reloading을 통해 변경점을 감지함
+//        devMiddlewear : {
+//         publicPath: '/dist'
+//        },
+//        static: { directory: path.resolve(__dirname)},
+//        hot: true
+//    }
+    devServer: {
+        devMiddleware: { publicPath: '/dist' },
+        static: { directory: path.resolve(__dirname) },
+        hot: true
+  }
 }
