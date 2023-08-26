@@ -48,7 +48,11 @@ const NumberBaseball = () => {
                     }
                 }
 
-                setTries([...tries, {try: value, result: `${strike} 스트라이크 / ${ball} 볼 입니다`}]);
+                // 이 부분은 모순이 있음 setTries([...tries, {try: value, result: `${strike} 스트라이크 / ${ball} 볼 입니다`}]);
+                //이전 값을 포함시켜서 진행해야하니 이렇게 진행해야함
+                setTries((pervState) => {
+                    return ([...pervState, {try: value, result: `${strike} 스트라이크 / ${ball} 볼 입니다`}])
+                });
             }
 
         }
