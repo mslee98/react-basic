@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import useInterval from './useInterval';
 
 const rspCoords = {
   바위: '0',
@@ -22,7 +23,8 @@ const RSP = () => {
   const [result, setResult] = useState('');
   const [imgCoord, setImageCoord] = useState(rspCoords.바위);
   const [score, setScore] = useState(0);
-  const interval = useRef(null);
+  // const interval = useRef(null);
+  const [isRunning, setIsRunning] = useState(true);
 
   
   const chanageHand = () => {
@@ -35,15 +37,19 @@ const RSP = () => {
     }
   }
   
-  useEffect( () => { // componentDidMount, componentDidUpdate 역할, 1:1 대응은 아님
-    interval.current = setInterval(chanageHand, 100);
-    return () => { // componentWillUnmount 역할
-      clearInterval(interval.current) 
-    }
-  }, [imgCoord])
+  // useEffect( () => { // componentDidMount, componentDidUpdate 역할, 1:1 대응은 아님
+  //   interval.current = setInterval(chanageHand, 100);
+  //   return () => { // componentWillUnmount 역할
+  //     clearInterval(interval.current) 
+  //   }
+  // }, [imgCoord])
+
+  //커스텀 훅을 사용해서 위 코드를 아래처럼 변경 가능
+  useInterval(chanageHand, isRunning? 100 : null);
 
   const onClickBtn = (choice) => () => {
-    clearInterval(interval.current);
+    // clearInterval(interval.current);
+    setIsRunning(false) //클릭했을때는 멈추도록
 
     const myScore = scores[choice];
     const cpuScore = scores[computerChoice(imgCoord)];
@@ -60,7 +66,8 @@ const RSP = () => {
       setScore( (prevState) => prevState -1);
     }
     setTimeout(() => {
-      interval.current = setInterval(chanageHand, 100);
+      // interval.current = setInterval(chanageHand, 100);
+      setIsRunning(true)//1초 뒤에는 멈출 수 있도록
     }, 1000);
   }
 
