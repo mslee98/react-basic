@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import Tictactoe from './Tictactoe-class';
+import Tictactoe from './TicTacToe';
 
-ReactDOM.render( <Tictactoe />, document.querySelector("#root"));
+
+ReactDOM.createRoot(document.querySelector("#root")).render(<Tictactoe />);
