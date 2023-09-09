@@ -1,10 +1,17 @@
-import React, { useCallback, useReducer } from 'react';
+import React, { useCallback, useReducer, useEffect } from 'react';
 import Table from './Table';
+
+
+export const SET_WINNER = 'SET_WINNER';
+export const CLICK_CELL = 'CLICK_CELL';
+export const CHANGE_TURN  = 'CHANGE_TURN ';
+export const RESET_GAME = 'RESET_GAME';
 
 const initialState = {
     winner: '',
-    trun: 'O',
-    tableData: [['', '', ''], ['', '', ''], ['', '', '']]
+    turn: 'O',
+    tableData: [['', '', ''], ['', '', ''], ['', '', '']],
+    recentCell: [-1,-1]
 }
 
 const reducer = (state, action) => {
@@ -17,34 +24,39 @@ const reducer = (state, action) => {
         case CLICK_CELL: {
             //이 부분 헷갈렸음
             const tableData = [...state.tableData]//얕은 복사 후 펴줘야한다고 함
-            tableData[action.row] = [...state.tableData[action.low]]; // 불변성 때문에 이런식으로 다 펼쳐야하는데 나중에는 immer라고 라이브러리 사용해서 가독성을 해결한다고 함
-            tableData[action.row][action.cell] = state.trun;
+            tableData[action.row] = [...tableData[action.row]]; // 불변성 때문에 이런식으로 다 펼쳐야하는데 나중에는 immer라고 라이브러리 사용해서 가독성을 해결한다고 함
+            tableData[action.row][action.cell] = state.turn;
 
             return {
                 ...state,
-                tableData
+                tableData,
+                recentCell : [action.row, action.cell]
             }
         };
         case CHANGE_TURN : {
+            console.log("CHANGE_TURN?")
             return {
                 ...state,
                 turn: state.turn === 'O' ? 'X' : 'O',
             }
         }
-
-
+        case RESET_GAME : {
+            return {
+                ...state,
+                tableData:[['', '', ''], ['', '', ''], ['', '', '']]
+            }
+        }
+        default :
+            return state;
     }
 }
 
-export const SET_WINNER = 'SET_WINNER';
-export const CLICK_CELL = 'CLICK_CELL';
-export const CHANGE_TURN  = 'CHANGE_TURN ';
 
 const TicTacToe = () => {  
     
     // useReducer는 단어 자체만 봐도 스테이트 개수 자체를 줄이는 거임 - 마치 class에서 this.state에 여러 스테이트들을 담는것처
     const [state, dispatch] = useReducer(reducer, initialState)
-
+    const { tableData, turn, winner, recentCell } = state
 
     const onClickTable = useCallback( () => {
         
@@ -55,6 +67,49 @@ const TicTacToe = () => {
         // dispatch({type:"SET_WINNER", winner: "O"})
         dispatch({type:SET_WINNER, winner: "O"}) // 약간 커뮤니티적 규칙 action의 타입은 대문자이며 상수로 빼두는게 규칙이라함ㅋㅋ
     },[])
+
+    useEffect( () => {
+        const [row, cell] = recentCell;
+        let win = false;
+        if(row < 0) {
+            return;
+        }
+        if(tableData[row][0] === turn && tableData[row][1] === turn && tableData[row][2] === turn) {
+            win = true
+        }
+        if(tableData[0][cell] === turn && tableData[1][cell] === turn && tableData[2][cell] === turn) {
+            win = true
+        }
+        if(tableData[0][0] === turn && tableData[1][1] === turn && tableData[2][2] === turn) {
+            win = true
+        }
+        if(tableData[0][2] === turn && tableData[1][1] === turn && tableData[2][0] === turn) {
+            win = true
+        }
+
+        if(win) {
+            dispatch({type: SET_WINNER, winner: turn})
+            // dispatch({type:CHANGE_TURN })
+            dispatch({type:RESET_GAME })
+        } else {
+            //무승부검사
+            let all = true;
+            tableData.forEach((row) => {
+                row.forEach((cell) => {
+                    if(!cell) {
+                        all = false;
+                    }
+                })
+            })
+
+            if(all) {
+                dispatch({type: SET_WINNER, winner: '무승부'})
+                dispatch({type:RESET_GAME })
+            } else {
+                dispatch({type:CHANGE_TURN })
+            }
+        }
+    }, [state.tableData])
 
     return(
         <>
