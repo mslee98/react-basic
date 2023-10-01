@@ -1,8 +1,7 @@
-import React, { useCallback, useState, useContext } from 'react';
+import React, { useCallback, useState, useContext, memo } from 'react';
 import { TableContext, START_GAME } from './MineSerach';
 
-
-const Form = () => {
+const Form = memo( () => {
     const [row, setRow] = useState(10);
     const [cell, setCell] = useState(10);
     const [mine, setMine] = useState(20);
@@ -21,7 +20,6 @@ const Form = () => {
         setMine(e.target.value);
     })
 
-
     const onClickBtn = useCallback( () => {
         dispatch({ type: START_GAME, row, cell, mine });
     }, [row, cell, mine]);
@@ -35,6 +33,6 @@ const Form = () => {
         </div>
     );
 
-}
+})
 
 export default Form

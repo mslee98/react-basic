@@ -1,5 +1,5 @@
-import React, { useContext, useCallback } from 'react';
-import { OPEN_CELL, CODE, TableContext } from './MineSerach';
+import React, { useContext, useCallback, memo, useMemo } from 'react';
+import { FLAG_CELL, CLICK_MINE, OPEN_CELL, CODE, TableContext } from './MineSerach';
 
 const getTdStyle = (code) => {
     switch(code) {
@@ -48,14 +48,19 @@ const getTdText = (code) => {
         case CODE.QUESTION:
             return '?'
         default:
-            return '';
+            // return code!=0?code:'';
+            return code || '';
     }
 }
 
-const Td = ({rowIndex, cellIndex}) => {
-    const {tableData, dispatch} = useContext(TableContext);
+const Td = memo(({rowIndex, cellIndex}) => {
+    const {tableData, dispatch, halted} = useContext(TableContext);
+
 
     const onClickTd = useCallback( () => {
+        if(halted) {
+            return
+        }
         switch (tableData[rowIndex][cellIndex]) {
             case CODE.OPENED:
             case CODE.FLAG_MINE:
@@ -70,10 +75,14 @@ const Td = ({rowIndex, cellIndex}) => {
                 return;
 
         }
-    }, [])
+    }, [tableData[rowIndex][cellIndex], halted])
 
     const onRightClickTd =  useCallback((e) => {
         e.preventDefault() // 우 클릭 메뉴 차단
+        if(halted) {
+            return;
+        }
+
         switch (tableData[rowIndex][cellIndex]) {
             case CODE.NORMAL:
             case CODE.MINE:
@@ -91,15 +100,19 @@ const Td = ({rowIndex, cellIndex}) => {
                 return;
         }
 
-    }, [tableData[rowIndex][cellIndex]]);
+    }, [tableData[rowIndex][cellIndex], halted]);
+    return <RealTd onClickTd={onClickTd} onRightClickTd={onRightClickTd} data={tableData[rowIndex][cellIndex]} />;
+});
 
+const RealTd = memo(({ onClickTd, onRightClickTd, data}) => {
+    console.log('real td rendered');
     return (
-        <td
-            style={getTdStyle(tableData[rowIndex][cellIndex])}
-            onClick={onClickTd}
-            onContextMenu={onRightClickTd}
-        >{getTdText(tableData[rowIndex][cellIndex])}</td>
-    );
-};
+      <td
+        style={getTdStyle(data)}
+        onClick={onClickTd}
+        onContextMenu={onRightClickTd}
+      >{getTdText(data)}</td>
+    )
+  });
 
 export default Td;

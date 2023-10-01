@@ -1,4 +1,4 @@
-import React, { createContext, useReducer, useContext, useMemo } from 'react';
+import React, { createContext, useReducer, useMemo, useEffect } from 'react';
 import Table from './Table';
 import Form from './Form';
 
@@ -14,24 +14,20 @@ export const CODE = {
 };
 
 export const TableContext = createContext({
-    tableData: [
-        [-1, -1, -1, -1, -1, -1, -1],
-        [-7, -1, -1, -1, -1, -1, -1],
-        [-1, -1, -1, -1, -1, -1, -1],
-        [-1, -1, -1, -1, -7, -1, -1],
-        [-1, -1, -1, -1, -1, -1, -1],
-    ], //초기값 선언
+    tableData: [], //초기값 선언
     dispatch: () => {}, //초기값 선언
+    halted: true,
 });
 
 const initialState = {
     tableData: [],
     timer: 0,
     result: '',
+    halted: true,
+    openedCount: 0
 }
 
 const plantMine = (row, cell, mine) => {
-    console.log(row, cell,mine);
     const candidate = Array(row * cell).fill().map( (arr,i) => {
         return i;
     });
@@ -67,35 +63,176 @@ export const CLICK_MINE = 'CLICK_MINE';
 export const FLAG_CELL = 'FLAG_CELL';
 export const QUESTION_CELL = 'QUESTION_CELL';
 export const NORMALIZE_CELL = 'NORMALIZE_CELL';
+export const INCREMENT_TIMER = 'INCREMENT_TIMER';
 
 const reducer = (state, action) => {
     switch(action.type) {
         case START_GAME :
             return {
                 ...state,
-                tableData: plantMine(action.row, action.cell, action.mine)
+                data : {
+                    row: action.row,
+                    cell: action.cell,
+                    mine: action.mine
+                },
+                tableData: plantMine(action.row, action.cell, action.mine),
+                halted: false,
+                openedCount: 0,
+                timer: 0
             }
-        case OPEN_CELL : {
+        case OPEN_CELL: {
+            const tableData = [...state.tableData];
+            tableData.forEach((row, i) => {
+                tableData[i] = [...row];
+            });
+
+            const checked = [];
+            let openedCount = 0;
+
+            const checkAround = (row, cell) => {
+
+                if (row < 0 || row >= tableData.length || cell < 0 || cell >= tableData[0].length) {
+                    return;
+                } // 상하좌우 없는칸은 안 열기
+
+                if ([CODE.OPENED, CODE.FLAG, CODE.FLAG_MINE, CODE.QUESTION_MINE, CODE.QUESTION].includes(tableData[row][cell])) {
+                    return;
+                } // 닫힌 칸만 열기
+
+                if (checked.includes(row + '/' + cell)) {
+                    return;
+                } else {
+                    checked.push(row + '/' + cell);
+                } // 한 번 연칸은 무시하기
+
+                let around = [
+                    tableData[row][cell - 1], tableData[row][cell + 1],
+                ];
+
+                if (tableData[row - 1]) {
+                    around = around.concat([tableData[row - 1][cell - 1], tableData[row - 1][cell], tableData[row - 1][cell + 1]]);
+                }
+
+                if (tableData[row + 1]) {
+                    around = around.concat([tableData[row + 1][cell - 1], tableData[row + 1][cell], tableData[row + 1][cell + 1]]);
+                }
+
+                const count = around.filter(function (v) {
+                    return [CODE.MINE, CODE.FLAG_MINE, CODE.QUESTION_MINE].includes(v);
+                }).length;
+
+                if (count === 0) { // 주변칸 오픈
+                    if (row > -1) {
+                        const near = [];
+                        if (row - 1 > -1) {
+                            near.push([row -1, cell - 1]);
+                            near.push([row -1, cell]);
+                            near.push([row -1, cell + 1]);
+                        }
+
+                        near.push([row, cell - 1]);
+                        near.push([row, cell + 1]);
+
+                        if (row + 1 < tableData.length) {
+                            near.push([row + 1, cell - 1]);
+                            near.push([row + 1, cell]);
+                            near.push([row + 1, cell + 1]);
+                        }
+                        near.forEach((n) => {
+                            if (tableData[n[0]][n[1]] !== CODE.OPENED) {
+                                checkAround(n[0], n[1]);
+                            }
+                        })
+                    }
+                }
+
+                if(tableData[row][cell] === CODE.NORMAL) {
+                    openedCount++;
+                }
+
+                tableData[row][cell] = count;
+            };
+
+            checkAround(action.row, action.cell);
+
+            let halted = false
+            let result = '';
+            if((state.data.row * state.data.cell) - state.data.mine === state.openedCount + openedCount) { //승리
+                halted = true;
+                result = `${state.timer}만에 승리하셨습니다.`; 
+            }
+
+            return {
+                ...state,
+                tableData,
+                openedCount: state.openedCount + openedCount,
+                halted,
+                result
+            };
+            }
+        case CLICK_MINE: {
             const tableData = [...state.tableData];
             tableData[action.row] = [...state.tableData[action.row]];
-            tableData[action.row][action.cell] = CODE.OPENED;
+            tableData[action.row][action.cell] = CODE.CLICKED_MINE;
+
+            return {
+                ...state,
+                halted: true,
+                tableData,
+            }
+        }
+        case FLAG_CELL : {
+            const tableData = [...state.tableData];
+            tableData[action.row] = [...state.tableData[action.row]];
+
+            if(tableData[action.row][action.cell] === CODE.MINE) {
+                tableData[action.row][action.cell] = CODE.FLAG_MINE;
+            } else {
+                tableData[action.row][action.cell] = CODE.FLAG_CELL;
+            }
+
+            return {
+                ...state,
+                tableData,
+            }
+                
+        }
+        case QUESTION_CELL : {
+            const tableData = [...state.tableData];
+            tableData[action.row] = [...state.tableData[action.row]];
+
+            if(tableData[action.row][action.cell] === CODE.FLAG_MINE) {
+                tableData[action.row][action.cell] = CODE.QUESTION_MINE;
+            } else {
+                tableData[action.row][action.cell] = CODE.QUESTION;
+            }
 
             return {
                 ...state,
                 tableData,
             }
         }
-        case CLICK_MINE:
-        // case CLICKED_MINE: {
-        //     const tableData = [...state.tableData];
-        //     tableData[action.row] = [...state.tableData[action.row]];
-        //     tableData[action.row][action.cell] = CODE.OPENED;
+        case NORMALIZE_CELL : {
+            const tableData = [...state.tableData];
+            tableData[action.row] = [...state.tableData[action.row]];
 
-        //     return {
-        //         ...state,
-        //         tableData,
-        //     }
-        // }
+            if(tableData[action.row][action.cell] === CODE.FLAG_MINE) {
+                tableData[action.row][action.cell] = CODE.MINE;
+            } else {
+                tableData[action.row][action.cell] = CODE.NORMAL;
+            }
+
+            return {
+                ...state,
+                tableData,
+            }
+        }
+        case INCREMENT_TIMER : {
+            return {
+                ...state,
+                timer: state.timer + 1
+            }
+        }
         default:
             return state;
     }
@@ -103,17 +240,34 @@ const reducer = (state, action) => {
 
 const MineSearch = () => {
     const [state, dispatch] = useReducer(reducer, initialState);
-    // const value = useContext(TableContext)
-    const value = useMemo( () => { tableData: state.tableData, dispatch} , [state.tableData]);
+
+    const { tableData, halted, timer, result} = state;
+    
+    const value = useMemo( () => ({ 
+        tableData, dispatch, halted
+    }) , [tableData, halted]);
+
+    useEffect(() => {
+        let timer;
+        if(!halted) {
+            timer = setInterval( () => {
+                dispatch({type: INCREMENT_TIMER})
+            }, 1000)
+        }
+
+        return () => {
+            clearInterval(timer)
+        }
+    }, [halted])
 
     return (
         <>
             {/* <TableContext.Provider value={{ tableData: state.tableData, dispatch}}> 이렇게 적으면 MineSearch가 리랜더링되면 배먼 새로운 객체를 생성하며 이것은 즉, 자식컴포넌트들도 모두 리랜더링이 되기 떄문에 성능정으로 매우 안좋음 그래서 캐싱?해야한다고 함*/}
-            <TableContext.Provider value={{ tableData: state.tableData, dispatch}}>
-                <Form dispatch={dispatch} />
-                <div>{state.timer}</div>
+            <TableContext.Provider value={value}>
+                <Form/>
+                <div>{timer}</div>
                 <Table />
-                <div>{state.result}</div>
+                <div>{result}</div>
             </TableContext.Provider>
         </>
     )
